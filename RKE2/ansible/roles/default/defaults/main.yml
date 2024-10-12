@@ -1,0 +1,12 @@
+---
+
+rke2_master_node: rancher-1
+rke2_cluster_name: teste
+rke2_minor: 30
+linux_major: 9
+cluster_cidr: 10.200.0.0/16
+arch: aarch64
+rancher_chart_version: 2.9.2
+proxy_url: http://192.168.86.185:3128
+no_proxy: 127.0.0.0/8,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,rancher-1,rancher-2,rancher-3
+rancher_hostname: rancher.laner.com.br

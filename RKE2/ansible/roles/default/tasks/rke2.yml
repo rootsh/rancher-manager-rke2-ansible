@@ -1,0 +1,105 @@
+---
+
+- name: Add Rancher RKE2 repository
+  ansible.builtin.yum_repository:
+    name: rancher-rke2-1-{{ rke2_minor }}-latest
+    description: Rancher RKE2 1.{{ rke2_minor }} Latest
+    file: rke2
+    baseurl: https://rpm.rancher.io/rke2/latest/1.{{ rke2_minor }}/centos/{{ linux_major }}/{{ arch }}
+    gpgkey: https://rpm.rancher.io/public.key
+    gpgcheck: true
+    enabled: true
+
+- name: Add Rancher RKE2 repository common
+  ansible.builtin.yum_repository:
+    name: rrancher-rke2-common-stable
+    description: Rancher RKE2 Common
+    file: rke2-common
+    baseurl: https://rpm.rancher.io/rke2/stable/common/centos/{{ linux_major }}/noarch
+    gpgkey: https://rpm.rancher.io/public.key
+    gpgcheck: true
+    enabled: true
+
+- name: Install RKE2 server
+  ansible.builtin.dnf:
+    name: rke2-server
+    state: latest
+
+- name: Install RKE2 agent
+  ansible.builtin.dnf:
+    name: rke2-agent
+    state: latest
+
+- name: Rancher RKE2 directory config
+  ansible.builtin.file:
+    path: /etc/rancher/rke2
+    state: directory
+    recurse: yes
+    owner: root
+    group: root
+
+- name: Rancher RKE2 file config
+  ansible.builtin.template:
+    src: config.yaml.j2
+    dest: /etc/rancher/rke2/config.yaml
+    owner: root
+    group: root
+  when: 'ansible_hostname | string in rke2_master_node'      
+
+- name: Rancher RKE2 Server default
+  ansible.builtin.template:
+    src: rke2-server-default.j2
+    dest: /etc/default/rke2-server
+    owner: root
+    group: root
+
+- name: Rancher RKE2 Agent default
+  ansible.builtin.template:
+    src: rke2-agent-default.j2
+    dest: /etc/default/rke2-agent
+    owner: root
+    group: root
+
+- name: Start RKE2 Server
+  ansible.builtin.systemd_service:
+    name: rke2-server.service
+    state: started
+    enabled: true
+  when: 'ansible_hostname | string in rke2_master_node'
+
+- name: Check RKE2 master running
+  ansible.builtin.pause:
+    prompt: "Check RKE1 master running"
+
+- name: Get token
+  shell: cat /var/lib/rancher/rke2/server/node-token
+  register: rke2_token_file
+  when: 'ansible_hostname | string in rke2_master_node'
+
+- name: Write/create RKE2 token to Vault
+  community.hashi_vault.vault_kv2_write:
+    url: '{{ vault_addr }}'
+    token: '{{ vault_token }}'
+    path: RKE2/cluster/{{ rke2_cluster_name }}/token
+    engine_mount_point: secret
+    cas: 0
+    data:
+      token: '{{ rke2_token_file.stdout }}'
+  when: 'ansible_hostname | string in rke2_master_node'
+
+- name: Setting RKE2 Token to variable
+  ansible.builtin.set_fact:
+    rke2_token: "{{ lookup('community.hashi_vault.vault_kv2_get', 'RKE2/cluster/{{ rke2_cluster_name }}/token', engine_mount_point='secret') }}"
+
+- name: Rancher RKE2 file config
+  ansible.builtin.template:
+    src: config.yaml.j2
+    dest: /etc/rancher/rke2/config.yaml
+    owner: root
+    group: root
+
+- name: Start RKE2 Server
+  ansible.builtin.systemd_service:
+    name: rke2-server.service
+    state: started
+    enabled: true

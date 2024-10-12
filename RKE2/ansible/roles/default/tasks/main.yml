@@ -1,0 +1,20 @@
+---
+
+- name: Common
+  ansible.builtin.include_tasks: common.yml
+
+- name: NetworkManager
+  ansible.builtin.include_tasks: networkmanager.yml
+
+- name: RKE2
+  ansible.builtin.include_tasks: rke2.yml
+
+- name: Kubernetes
+  ansible.builtin.include_tasks: kubernetes.yml
+
+- name: NGINX Ingress
+  ansible.builtin.include_tasks: nginx.yml
+
+- name: Rancher Manager
+  ansible.builtin.include_tasks: rancher_manager.yml
+

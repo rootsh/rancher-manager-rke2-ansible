@@ -1,0 +1,18 @@
+---
+
+- name: Rancher RKE2 directory manifests
+  ansible.builtin.file:
+    path: /var/lib/rancher/rke2/server/manifests
+    state: directory
+    recurse: yes
+    owner: root
+    group: root
+  when: 'ansible_hostname | string in rke2_master_node'
+
+- name: NGNIX ingress helm 
+  ansible.builtin.copy:
+    src: rke2-ingress-nginx-config.yaml
+    dest: /var/lib/rancher/rke2/server/manifests/rke2-ingress-nginx-config.yaml
+    owner: root
+    group: root
+  when: 'ansible_hostname | string in rke2_master_node'

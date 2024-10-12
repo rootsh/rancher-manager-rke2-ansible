@@ -1,0 +1,43 @@
+---
+
+- name: Add Kubernetes repository
+  ansible.builtin.yum_repository:
+    name: kubernetes
+    description: Kubernetes
+    file: kubernetes
+    baseurl: https://pkgs.k8s.io/core:/stable:/v1.{{ rke2_minor }}/rpm/
+    gpgkey: https://pkgs.k8s.io/core:/stable:/v1.{{ rke2_minor }}/rpm/repodata/repomd.xml.key
+    gpgcheck: true
+    enabled: true
+
+- name: Install kubectl
+  ansible.builtin.dnf:
+    name: kubectl
+    state: latest
+
+- name: Kube config directory
+  ansible.builtin.file:
+    path: /root/.kube
+    state: directory
+    recurse: yes
+    owner: root
+    group: root
+
+
+- name: Create a symbolic link for Kubernetes config
+  ansible.builtin.file:
+    src: /etc/rancher/rke2/rke2.yaml
+    dest: /root/.kube/config
+    owner: root
+    group: root
+    state: link
+
+- name: bashrc kubectl completion
+  ansible.builtin.lineinfile:
+    path: /root/.bashrc
+    line: source <(kubectl completion bash)
+
+- name: bashrc alias kubectl
+  ansible.builtin.lineinfile:
+    path: /root/.bashrc
+    line: alias k="kubectl"

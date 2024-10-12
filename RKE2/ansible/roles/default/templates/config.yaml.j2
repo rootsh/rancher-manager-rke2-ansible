@@ -1,0 +1,16 @@
+{% if ansible_hostname != rke2_master_node %}
+server: https://{{ rke2_master_node }}:9345
+token: {{ rke2_token.secret.token }}
+{% endif %}
+write-kubeconfig-mode: "0644"
+cluster-cidr: {{ cluster_cidr }}
+tls-san:
+{% for _host in vars['hostvars'] %}
+  - {{ hostvars[_host].hostname }}
+{% endfor %}
+{% for host in vars['ansible_play_hosts'] %}
+  - {{ host }}
+{% endfor %}
+node-label:
+  - "rancher=management"
+debug: true

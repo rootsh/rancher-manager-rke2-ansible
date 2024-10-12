@@ -1,0 +1,70 @@
+---
+
+- name: Upgrade all packages
+  ansible.builtin.package:
+    name: "*"
+    state: latest
+
+- name: Install NetworkManager-cloud-setup
+  ansible.builtin.dnf:
+    name: NetworkManager-cloud-setup
+    state: latest
+
+- name: Install bash-completion
+  ansible.builtin.dnf:
+    name: bash-completion
+    state: latest
+
+- name: Install oracle-epel-release-el
+  ansible.builtin.dnf:
+    name: oracle-epel-release-el{{ linux_major }}
+    state: latest
+
+- name: Install python3-hvac
+  ansible.builtin.dnf:
+    name: python3-hvac
+    state: latest
+
+- name: Check helm binaty exist
+  ansible.builtin.stat:
+    path: /usr/local/bin/helm
+  register: helm
+
+- name: Install helm
+  ansible.builtin.shell:
+    cmd: curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+  when: helm.stat.exists == False
+
+- name: Disable SELinux
+  ansible.posix.selinux:
+    state: disabled
+
+- name: Stop firewalld
+  ansible.builtin.systemd_service:
+    name: firewalld
+    state: stopped
+    enabled: false
+
+- name: Sysctl RKE2
+  ansible.builtin.copy:
+    src: 90-rke2.conf
+    dest: /etc/sysctl.d/90-rke2.conf
+    owner: root
+    group: root
+
+- name: Sysctl RKE2 CIS
+  ansible.builtin.copy:
+    src: rke2-cis-sysctl.conf
+    dest: /etc/sysctl.d/rke2-cis-sysctl.conf
+    owner: root
+    group: root
+
+- name: Set proxy in 
+  ansible.builtin.blockinfile:
+    path: /etc/environment
+    append_newline: true
+    prepend_newline: true
+    block: |
+      HTTP_PROXY={{ proxy_url }}
+      HTTPS_PROXY={{ proxy_url }}
+      NO_PROXY={{ no_proxy }}

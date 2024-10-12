@@ -1,0 +1,4 @@
+[rancher]
+192.168.86.190  hostname=rancher-1
+192.168.86.191  hostname=rancher-2
+192.168.86.192  hostname=rancher-3

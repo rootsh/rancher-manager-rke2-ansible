@@ -1,0 +1,15 @@
+---
+
+- name: NetworkManager RKE2 Canal
+  ansible.builtin.copy:
+    src: rke2-canal.conf
+    dest: /etc/NetworkManager/conf.d/rke2-canal.conf
+    owner: root
+    group: root
+  register: networkmanager
+
+- name: Reload NetworkManager
+  ansible.builtin.systemd_service:
+    name: NetworkManager
+    state: reloaded
+  when: networkmanager.changed
